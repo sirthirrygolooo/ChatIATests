@@ -38,7 +38,7 @@ async function main() {
             console.log('[-] User disconnected');
         });
 
-        socket.on('chat message', async (msg, clientOffest, callback) => {
+        socket.on('chat message', async (msg, clientOffset, callback) => {
             let result;
             try {
                 result = await db.run('INSERT INTO messages (content, client_offset) VALUES (?, ?)', msg, clientOffset);
