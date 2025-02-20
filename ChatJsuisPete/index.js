@@ -12,13 +12,15 @@ async function main() {
     });
 
     await db.exec(`
+        DROP TABLE IF EXISTS messages;
       CREATE TABLE IF NOT EXISTS messages (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           client_offset TEXT UNIQUE,
-          content TEXT
+          username TEXT DEFAULT 'Anonyme',
+          content TEXT,
+          timestamp TEXT
       );
     `);
-
 
     const app = express();
     const server = createServer(app);
@@ -32,37 +34,35 @@ async function main() {
     });
 
     io.on('connection', async (socket) => {
-        console.log('[+] User connected');
+        console.log(`[+] ${socket.id} connected`);
+        io.emit('status message', `✅ Un utilisateur est connecté !`, 'green');
 
         socket.on('disconnect', () => {
-            console.log('[-] User disconnected');
+            console.log(`[-] ${socket.id} disconnected`);
+            io.emit('status message', `❌ Un utilisateur s'est déconnecté.`, 'red');
         });
 
-        socket.on('chat message', async (msg, clientOffset, callback) => {
-            let result;
+        socket.on('chat message', async (msg, clientOffset, username = 'Anonyme', callback) => {
+            const timestamp = new Date().toLocaleTimeString();
             try {
-                result = await db.run('INSERT INTO messages (content, client_offset) VALUES (?, ?)', msg, clientOffset);
+                await db.run('INSERT INTO messages (content, client_offset, username, timestamp) VALUES (?, ?, ?, ?)', msg, clientOffset, username, timestamp);
             } catch (e) {
                 if (e.errno === 19) {
                     callback();
-                  } else {
-                  }
-                  return;
+                }
+                return;
             }
-            io.emit('chat message', msg, result.lastID);
+            io.emit('chat message', msg, username, timestamp);
             callback();
         });
 
         if (!socket.recovered) {
             try {
-                await db.each('SELECT id, content FROM messages WHERE id > ?',
-                    [socket.handshake.auth.serverOffset || 0],
-                    (_err, row) => {
-                        socket.emit('chat message', row.content, row.id);
-                    }
-                )
+                await db.each('SELECT username, content, timestamp FROM messages', (_err, row) => {
+                    socket.emit('chat message', row.content, row.username, row.timestamp);
+                });
             } catch (e) {
-                console.log("error : ", e)
+                console.log('Erreur de récupération:', e);
             }
         }
     });
@@ -70,7 +70,7 @@ async function main() {
     app.use(express.static(path.join(__dirname, 'public')));
 
     server.listen(3000, () => {
-        console.log('server running at http://localhost:3000');
+        console.log('Server running at http://localhost:3000');
     });
 }
 
