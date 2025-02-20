@@ -29,7 +29,7 @@ form.addEventListener('submit', (e) => {
 
 socket.on('chat message', (msg, sender, time) => {
     const item = document.createElement('li');
-    item.innerHTML = `<strong>[${time}] ${sender}:</strong> ${msg}`;
+    item.innerHTML = `<strong>[${time}] ${sender}: </strong> ${msg}`;
     messages.appendChild(item);
     window.scrollTo(0, document.body.scrollHeight);
 });
@@ -45,9 +45,36 @@ toggleButton.addEventListener('click', (e) => {
     e.preventDefault();
     if (socket.connected) {
         toggleButton.innerText = 'Connect';
-        socket.disconnect();
+        const item = document.createElement('li');
+        item.textContent = "❌ Vous avez été déconnecté du serveur.";
+        item.style.color = 'red';
+        messages.appendChild(item);
+        socket.disconnect();    
     } else {
         toggleButton.innerText = 'Disconnect';
         socket.connect();
     }
 });
+
+const clearButton = document.getElementById('clear-btn');
+
+clearButton.addEventListener('click', async () => {
+    await fetch('/messages', { method: 'DELETE' });
+});
+
+socket.on('clear messages', () => {
+    messages.innerHTML = '';
+});
+
+async function loadMessages() {
+    const response = await fetch('/messages');
+    const msgs = await response.json();
+    messages.innerHTML = '';
+    msgs.forEach(({ content, username, timestamp }) => {
+        const item = document.createElement('li');
+        item.innerHTML = `<strong>[${timestamp}] ${username}: </strong> ${content}`;
+        messages.appendChild(item);
+    });
+}
+
+socket.on('connect', loadMessages);

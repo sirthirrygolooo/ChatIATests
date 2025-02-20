@@ -7,14 +7,15 @@
 </head>
 <body>
     <nav>
-        <h2>Bienvenue sur ChatJsuisPété ! 👽</h2>
+        <h2><span style="color:blueviolet">Bienvenue</span> sur ChatJsuisPété ! 👽</h2>
         <h4>Votre pseudo :
             <input id="username" type="text" placeholder="Votre pseudo" />
         </h4>
     </nav>
     <ul id="messages"></ul>
     <form id="form" action="">
-        <input id="input" autocomplete="off" /><button>Send</button>
+        <input id="input" autocomplete="off" placeholder="Entrez un message" /><button>Send</button>
+        <button id="clear-btn">Effacer l'historique</button>
         <button id="toggle-btn" class="disconnect-btn">Disconnect</button>
     </form>
     <script src="/socket.io/socket.io.js"></script>
