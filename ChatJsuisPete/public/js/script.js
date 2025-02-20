@@ -1,5 +1,5 @@
 const socket = io({
-    auth: { serverOffset: 0 },
+    auth: { serverOffset: 0, username: localStorage.getItem('username') || 'Anonyme' },
     ackTimeout: 10000,
     retries: 3,
 });
@@ -7,14 +7,22 @@ const socket = io({
 const form = document.getElementById('form');
 const input = document.getElementById('input');
 const messages = document.getElementById('messages');
-const username = prompt('Entrez votre pseudo :') || 'Anonyme';
+const usernameInput = document.getElementById('username');
 const toggleButton = document.getElementById('toggle-btn');
+
+usernameInput.value = localStorage.getItem('username') || '';
+usernameInput.addEventListener('change', () => {
+    localStorage.setItem('username', usernameInput.value || 'Anonyme');
+    socket.disconnect();
+    socket.auth.username = usernameInput.value;
+    socket.connect();
+});
 
 form.addEventListener('submit', (e) => {
     e.preventDefault();
     if (input.value) {
         const clientOffset = `${socket.id}-${Date.now()}`;
-        socket.emit('chat message', input.value, clientOffset, username);
+        socket.emit('chat message', input.value, clientOffset);
         input.value = '';
     }
 });
