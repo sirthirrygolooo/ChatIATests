@@ -1,4 +1,4 @@
-async function getOllamaResponse(message, model = 'deepseek-r1:7b') {
+async function getOllamaResponse(message, model = 'deepseek-r1:8b') {
     const fetch = (await import('node-fetch')).default;
 
     try {
